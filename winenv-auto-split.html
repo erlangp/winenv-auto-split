@@ -1,0 +1,269 @@
+<!doctype html>
+<!--
+MIT License
+
+Copyright (c) 2017 Erlang Parasu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!--
+//| ProjectName : Windows Environment Auto Split
+//| FileName    : winenv-auto-split.html
+//| Version     : 1.0
+//| Release     : 2017-09-09
+-->
+<html>
+	<head>
+		<title>
+            Windows Environment Auto Split
+        </title>
+		<meta charset="utf-8"/>
+		<link rel="stylesheet" 
+              href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.css"/>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.js"></script>
+        
+        <script>
+            var addUiRow = function (variable, value) {};
+            
+            var removeLastChar = function (text, charToRemove) {
+                // Remove last separator
+                var lastChar = text.charAt(text.length - 1);
+                if (lastChar === charToRemove) {
+                    return text.substr(0, text.length - 1);
+                }
+                return text;
+            };
+            
+            $(document).ready(function () {
+                const PATH_VARIABLE = 'PATH';
+                const PATH_MAX_LENGTH = 260;
+                const VAR_PREFIX = 'P_';
+                const SEPARATOR = ';';
+                
+                $('#input_fullpath').focus();
+                
+                $('#button_reset').click(function () {
+                    $('#input_fullpath').val(''); // Reset data
+                    $('#div_results').html(''); // Reset list
+                    $('#input_fullpath').focus();
+                });
+                
+                $('#button_split').click(function () {
+                    $('#div_results').html(''); // Reset list
+                    
+                    console.log('INPUT');
+                    var fullPath = $('#input_fullpath').val(); // Read the data
+                    console.log('FullPath:', fullPath);
+                    console.log('');
+                    
+                    console.log('PROCESS');
+                    var items = fullPath.split(SEPARATOR);
+                    console.log('ItemsCount:', items.length);
+                    console.log('Items:', items);
+                    console.log('');
+                    
+                    var objects = [];
+                    
+                    var i = 0;
+                    for (i = 0; i < items.length; i++) {
+                        (function (index) {
+                            var text = items[index];
+                            console.log('Length=' + text.length, 'Text=' + text);
+                            
+                            if (text.length === 0) {
+                                console.log('SkipEmptyText');
+                                return; // Skip
+                            }
+                            
+                            var object = {
+                                text: text
+                            };
+                            
+                            objects.push(object);
+                        })(i);
+                    }
+                    
+                    console.log('');
+                    console.log('ObjectsCount:', objects.length);
+                    console.log('Objects:', objects);
+                    console.log('');
+                    
+                    var rows = [];
+                    var row = '';
+                    var index = 0;
+                    
+                    while (index < objects.length) {
+                        console.log('ObjectIndex=' + index);
+                        if (row.length + objects[index].text.length + SEPARATOR.length < PATH_MAX_LENGTH) {
+                            // Append text to row
+                            console.log('AppendTextToRow');
+                            row += objects[index].text + SEPARATOR;
+                            index++;
+                        } else {
+                            // Append row to rows
+                            console.log('AppendRowToRows (while)');
+                            row = removeLastChar(row, SEPARATOR);
+                            console.log(row.length, row);
+                            rows.push(row);
+                            row = '';
+                        }
+                        console.log('Next');
+                    }
+                    if (row !== '') {
+                        // Append row to rows
+                        console.log('AppendRowToRows');
+                        row = removeLastChar(row, SEPARATOR);
+                        console.log(row.length, row);
+                        rows.push(row);
+                        row = '';
+                    }
+                    
+                    console.log('');
+                    console.log('OUTPUT');
+                    
+                    var objRows = [];
+                    
+                    for (i = 0; i < rows.length; i++) {
+                        (function (index) {
+                            var NUMBER = index + 1;
+                            var variable = '' + VAR_PREFIX + NUMBER + '';
+                            var value = rows[index];
+                            
+                            var objRow = {
+                                variable: variable,
+                                value: value
+                            };
+                            objRows.push(objRow);
+                            
+                            console.log('Variable=' + objRow.variable, '|', 'Value=' + objRow.value);
+                            addUiRow(objRow.variable, objRow.value);
+                        })(i);
+                    }
+                    
+                    var pathValue = '';
+                    
+                    for (i = 0; i < objRows.length; i++) {
+                        (function (index) {
+                            const PREFIX = '%';
+                            const SUFFIX = '%';
+                            
+                            var item = PREFIX + objRows[index].variable + SUFFIX + SEPARATOR;
+                            pathValue += item;
+                        })(i);
+                    }
+                    
+                    pathValue = removeLastChar(pathValue, SEPARATOR);
+                    console.log('Variable=' + PATH_VARIABLE, '|', 'Value=' + pathValue);
+                    addUiRow(PATH_VARIABLE, pathValue);
+                });
+                
+                
+                
+                addUiRow = function (variable, value) {
+                    var html = '\
+                        <div class="fields">\
+                            <div class="four wide field">\
+                               <input placeholder="Variable"\
+                                      readonly\
+                                      value="' + variable + '"\
+                                      type="text">\
+                            </div>\
+                            <div class="twelve wide field">\
+                                <input placeholder="Value" \
+                                       readonly\
+                                       value="' + value + '"\
+                                       type="text">\
+                            </div>\
+                        </div>\
+                    ';
+                    $('#div_results').append(html);
+                };
+            });
+        </script>
+	</head>
+	<body>
+		<div class="ui container segment" 
+             style="margin-top: 2em;">
+            <form class="ui form">
+                <h4 class="ui dividing header" 
+                    style="margin-bottom: 2em; cursor: default;">
+                    Windows Environment Auto Split
+                </h4>
+                
+                <div class="field">
+                    <label>
+                        Full PATH
+                    </label>
+                    <div class="field">
+                        <input id="input_fullpath" 
+                               placeholder="Full Path" 
+                               type="text"
+                               value=""/>
+                    </div>
+                </div>
+                
+                <button class="ui primary button" 
+                        type="button"
+                        id="button_split"
+                        tabindex="0">
+                    Split
+                </button>
+                <button class="ui button" 
+                        type="button"
+                        id="button_reset"
+                        tabindex="0">
+                    Reset
+                </button>
+                
+                <div class="field" 
+                     style="margin-top: 2em; margin-bottom: 2em;">
+                    <label>
+                        Results
+                    </label>
+                    <div id="div_results">
+                        <!--
+                        <div class="fields">
+                            <div class="four wide field">
+                               <input placeholder="Variable"
+                                      readonly
+                                      value=""
+                                      type="text">
+                            </div>
+                            <div class="twelve wide field">
+                                <input placeholder="Value" 
+                                       readonly
+                                       value=""
+                                       type="text">
+                            </div>
+                        </div>
+                        -->
+                    </div>
+                </div>
+            </form>
+		</div>
+        <div class="ui container segment center aligned"
+             style="margin-bottom: 2em;">
+            <span>
+                Copyright &copy; 2017 Erlang Parasu
+            </span>
+        </div>
+	</body>
+</html>
+<!-- EOF -->
